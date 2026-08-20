@@ -43,40 +43,18 @@ private val uppercase = ('A'..'Z').map(Char::toString)
 private val lowercase = ('a'..'z').map(Char::toString)
 private val numbers = ('0'..'9').map(Char::toString)
 
-// Common school, paperwork, typing, and everyday punctuation.
+// Normal punctuation and symbols you are likely to use for schoolwork and paperwork.
 private val punctuation = listOf(
-    ".", ",", "?", "!", ":", ";", "'", "\"", "`", "´", "…",
-    "(", ")", "[", "]", "{", "}", "<", ">",
-    "-", "–", "—", "_", "/", "\\", "|", "•", "·", "~"
+    ".", ",", "?", "!", ":", ";", "'", "\"",
+    "(", ")", "[", "]", "{", "}",
+    "-", "_", "/", "\\", "%", "$", "@", "#", "&", "*"
 )
 
-// Common math/science notation that is useful in worksheets and notes.
+// High-school math/science symbols without the advanced/unnecessary symbol sets.
 private val mathSymbols = listOf(
-    "+", "−", "±", "∓", "×", "÷", "=", "≠", "≈", "≅", "≡",
-    "<", ">", "≤", "≥", "∞", "√", "∛", "∜", "∑", "∏", "∫",
-    "∂", "∆", "∇", "∝", "∈", "∉", "∋", "∅", "∩", "∪",
-    "⊂", "⊆", "⊄", "⊃", "⊇", "⊕", "⊗", "°", "′", "″", "‰", "%",
-    "^", "~", "≈", "→", "←", "↔", "⇒", "⇐", "⇔"
-)
-
-private val currencySymbols = listOf(
-    "$", "¢", "£", "€", "¥", "₹", "₽", "₩", "₺", "₱", "฿", "₫"
-)
-
-// Common symbols used in schoolwork, documents, technology, and everyday writing.
-private val commonSymbols = listOf(
-    "@", "#", "&", "*", "_", "|", "~", "^", "•", "§", "©", "®", "™",
-    "✓", "✔", "✗", "✘", "★", "☆", "♥", "♡", "→", "←", "↑", "↓",
-    "↗", "↘", "↙", "↖", "…", "※", "№", "¶", "†", "‡", "□", "■",
-    "○", "●", "△", "▲", "◇", "◆"
-)
-
-// Greek letters are common in math, science, and statistics.
-private val greekLetters = listOf(
-    "α", "β", "γ", "δ", "ε", "ζ", "η", "θ", "ι", "κ", "λ", "μ", "ν",
-    "ξ", "ο", "π", "ρ", "σ", "τ", "υ", "φ", "χ", "ψ", "ω",
-    "Α", "Β", "Γ", "Δ", "Ε", "Ζ", "Η", "Θ", "Ι", "Κ", "Λ", "Μ", "Ν",
-    "Ξ", "Ο", "Π", "Ρ", "Σ", "Τ", "Υ", "Φ", "Χ", "Ψ", "Ω"
+    "+", "−", "×", "÷", "=", "≠", "≈", "<", ">", "≤", "≥",
+    "±", "%", "√", "π", "∞", "°", "²", "³", "^", "Δ",
+    "α", "β", "θ", "μ", "Σ", "→", "←", "↔"
 )
 
 @Composable
@@ -108,9 +86,6 @@ private fun HandwritingLabScreen() {
         "Numbers" -> numbers
         "Punctuation" -> punctuation
         "Math" -> mathSymbols
-        "Currency" -> currencySymbols
-        "Symbols" -> commonSymbols
-        "Greek" -> greekLetters
         else -> punctuation
     }
     val character = characters[index]
@@ -127,7 +102,7 @@ private fun HandwritingLabScreen() {
             modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            listOf("Uppercase", "Lowercase", "Numbers", "Punctuation", "Math", "Currency", "Symbols", "Greek").forEach { name ->
+            listOf("Uppercase", "Lowercase", "Numbers", "Punctuation", "Math").forEach { name ->
                 OutlinedButton(onClick = {
                     category = name
                     index = 0
