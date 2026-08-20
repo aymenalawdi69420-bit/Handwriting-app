@@ -1,7 +1,7 @@
 package com.aymen.handwritinglab
 
-import android.os.Bundle
 import androidx.activity.ComponentActivity
+import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,6 +15,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -22,17 +23,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            MaterialTheme {
-                HandwritingLabScreen()
-            }
-        }
+        setContent { MaterialTheme { HandwritingLabScreen() } }
     }
 }
 
@@ -41,12 +39,14 @@ private val lowercase = ('a'..'z').map(Char::toString)
 private val numbers = ('0'..'9').map(Char::toString)
 private val punctuation = listOf(".", ",", "?", "!", ":", ";", "'", "\"", "(", ")", "[", "]", "-", "_", "/", "\\", "+", "=", "*", "%", "&", "@", "#", "$", "π", "×", "÷", "±", "√", "≤", "≥", "≠", "∞", "°")
 
-@androidx.compose.runtime.Composable
+@Composable
 private fun HandwritingLabScreen() {
+    val context = LocalContext.current
     var category by remember { mutableStateOf("Uppercase") }
     var index by remember { mutableIntStateOf(0) }
     var sample by remember { mutableIntStateOf(1) }
     var strokes by remember { mutableStateOf(emptyList<Stroke>()) }
+    var canvasView by remember { mutableStateOf<HandwritingView?>(null) }
 
     val characters = when (category) {
         "Uppercase" -> uppercase
@@ -72,6 +72,7 @@ private fun HandwritingLabScreen() {
                     index = 0
                     sample = 1
                     strokes = emptyList()
+                    canvasView?.clear()
                 }) { Text(name) }
             }
         }
@@ -84,24 +85,29 @@ private fun HandwritingLabScreen() {
 
         AndroidView(
             modifier = Modifier.fillMaxWidth().weight(1f),
-            factory = { context ->
-                HandwritingView(context).also { view ->
+            factory = { ctx ->
+                HandwritingView(ctx).also { view ->
+                    canvasView = view
                     view.onStrokesChanged = { strokes = it }
                 }
             },
-            update = { it.onStrokesChanged = { strokes = it } }
+            update = { view ->
+                canvasView = view
+                view.onStrokesChanged = { strokes = it }
+            }
         )
 
         Spacer(Modifier.height(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedButton(onClick = { strokes = emptyList() }) { Text("Clear") }
+            OutlinedButton(onClick = { canvasView?.clear() }) { Text("Clear") }
             Button(onClick = {
                 if (strokes.isEmpty()) return@Button
-                DatasetStore.saveSample(this@HandwritingLabScreen, category, character, sample, strokes)
+                DatasetStore.saveSample(context, category, character, sample, strokes)
                 if (sample < 15) sample++ else {
                     sample = 1
                     index = (index + 1) % characters.size
                 }
+                canvasView?.clear()
                 strokes = emptyList()
             }) { Text(if (sample < 15) "Save & Next" else "Save & Next Character") }
         }
