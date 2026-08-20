@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -41,7 +42,42 @@ class MainActivity : ComponentActivity() {
 private val uppercase = ('A'..'Z').map(Char::toString)
 private val lowercase = ('a'..'z').map(Char::toString)
 private val numbers = ('0'..'9').map(Char::toString)
-private val punctuation = listOf(".", ",", "?", "!", ":", ";", "'", "\"", "(", ")", "[", "]", "-", "_", "/", "\\", "+", "=", "*", "%", "&", "@", "#", "$", "π", "×", "÷", "±", "√", "≤", "≥", "≠", "∞", "°")
+
+// Common school, paperwork, typing, and everyday punctuation.
+private val punctuation = listOf(
+    ".", ",", "?", "!", ":", ";", "'", "\"", "`", "´", "…",
+    "(", ")", "[", "]", "{", "}", "<", ">",
+    "-", "–", "—", "_", "/", "\\", "|", "•", "·", "~"
+)
+
+// Common math/science notation that is useful in worksheets and notes.
+private val mathSymbols = listOf(
+    "+", "−", "±", "∓", "×", "÷", "=", "≠", "≈", "≅", "≡",
+    "<", ">", "≤", "≥", "∞", "√", "∛", "∜", "∑", "∏", "∫",
+    "∂", "∆", "∇", "∝", "∈", "∉", "∋", "∅", "∩", "∪",
+    "⊂", "⊆", "⊄", "⊃", "⊇", "⊕", "⊗", "°", "′", "″", "‰", "%",
+    "^", "~", "≈", "→", "←", "↔", "⇒", "⇐", "⇔"
+)
+
+private val currencySymbols = listOf(
+    "$", "¢", "£", "€", "¥", "₹", "₽", "₩", "₺", "₱", "฿", "₫"
+)
+
+// Common symbols used in schoolwork, documents, technology, and everyday writing.
+private val commonSymbols = listOf(
+    "@", "#", "&", "*", "_", "|", "~", "^", "•", "§", "©", "®", "™",
+    "✓", "✔", "✗", "✘", "★", "☆", "♥", "♡", "→", "←", "↑", "↓",
+    "↗", "↘", "↙", "↖", "…", "※", "№", "¶", "†", "‡", "□", "■",
+    "○", "●", "△", "▲", "◇", "◆"
+)
+
+// Greek letters are common in math, science, and statistics.
+private val greekLetters = listOf(
+    "α", "β", "γ", "δ", "ε", "ζ", "η", "θ", "ι", "κ", "λ", "μ", "ν",
+    "ξ", "ο", "π", "ρ", "σ", "τ", "υ", "φ", "χ", "ψ", "ω",
+    "Α", "Β", "Γ", "Δ", "Ε", "Ζ", "Η", "Θ", "Ι", "Κ", "Λ", "Μ", "Ν",
+    "Ξ", "Ο", "Π", "Ρ", "Σ", "Τ", "Υ", "Φ", "Χ", "Ψ", "Ω"
+)
 
 @Composable
 private fun HandwritingLabScreen() {
@@ -58,7 +94,9 @@ private fun HandwritingLabScreen() {
         ReviewScreen(context, onBack = { showReview = false }, onExport = { file ->
             val uri = androidx.core.content.FileProvider.getUriForFile(context, context.packageName + ".fileprovider", file)
             context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
-                type = "application/zip"; putExtra(Intent.EXTRA_STREAM, uri); addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                type = "application/zip"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }, "Export handwriting dataset"))
         })
         return
@@ -68,27 +106,58 @@ private fun HandwritingLabScreen() {
         "Uppercase" -> uppercase
         "Lowercase" -> lowercase
         "Numbers" -> numbers
+        "Punctuation" -> punctuation
+        "Math" -> mathSymbols
+        "Currency" -> currencySymbols
+        "Symbols" -> commonSymbols
+        "Greek" -> greekLetters
         else -> punctuation
     }
     val character = characters[index]
 
-    Column(modifier = Modifier.fillMaxSize().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Text("HANDWRITING LAB", style = MaterialTheme.typography.headlineMedium)
         Text("Capture your natural handwriting with the S Pen")
         Spacer(Modifier.height(12.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf("Uppercase", "Lowercase", "Numbers", "Symbols").forEach { name ->
-                OutlinedButton(onClick = { category = name; index = 0; sample = 1; strokes = emptyList(); canvasView?.clear() }) { Text(name) }
+
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            listOf("Uppercase", "Lowercase", "Numbers", "Punctuation", "Math", "Currency", "Symbols", "Greek").forEach { name ->
+                OutlinedButton(onClick = {
+                    category = name
+                    index = 0
+                    sample = 1
+                    strokes = emptyList()
+                    canvasView?.clear()
+                }) { Text(name) }
             }
         }
+
         Spacer(Modifier.height(12.dp))
         Text("Write:", style = MaterialTheme.typography.titleMedium)
         Text(character, style = MaterialTheme.typography.displayLarge)
         Text("Sample $sample / 15")
         Spacer(Modifier.height(8.dp))
-        AndroidView(modifier = Modifier.fillMaxWidth().weight(1f), factory = { ctx ->
-            HandwritingView(ctx).also { view -> canvasView = view; view.onStrokesChanged = { strokes = it } }
-        }, update = { view -> canvasView = view; view.onStrokesChanged = { strokes = it } })
+
+        AndroidView(
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            factory = { ctx ->
+                HandwritingView(ctx).also { view ->
+                    canvasView = view
+                    view.onStrokesChanged = { strokes = it }
+                }
+            },
+            update = { view ->
+                canvasView = view
+                view.onStrokesChanged = { strokes = it }
+            }
+        )
+
         Spacer(Modifier.height(8.dp))
         if (status.isNotEmpty()) Text(status)
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -98,9 +167,17 @@ private fun HandwritingLabScreen() {
                 if (strokes.isEmpty()) return@Button
                 DatasetStore.saveSample(context, category, character, sample, strokes)
                 status = "Saved $character sample $sample"
-                if (sample < 15) sample++ else { sample = 1; index = (index + 1) % characters.size }
-                canvasView?.clear(); strokes = emptyList()
-            }) { Text(if (sample < 15) "Save & Next" else "Save & Next Character") }
+                if (sample < 15) {
+                    sample++
+                } else {
+                    sample = 1
+                    index = (index + 1) % characters.size
+                }
+                canvasView?.clear()
+                strokes = emptyList()
+            }) {
+                Text(if (sample < 15) "Save & Next" else "Save & Next Character")
+            }
         }
     }
 }
@@ -110,12 +187,17 @@ private fun ReviewScreen(context: Context, onBack: () -> Unit, onExport: (java.i
     val root = java.io.File(context.filesDir, "handwriting")
     val files = if (root.exists()) root.walkTopDown().count { it.isFile && it.extension == "json" } else 0
     val chars = if (root.exists()) root.walkTopDown().filter { it.isFile && it.extension == "json" }.mapNotNull { it.parentFile?.name }.toSet().size else 0
-    Column(modifier = Modifier.fillMaxSize().padding(20.dp).verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(20.dp).verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Text("YOUR HANDWRITING DATA", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(12.dp))
         Text("$files samples saved across $chars characters")
         Spacer(Modifier.height(20.dp))
-        Button(onClick = { onExport(DatasetStore.exportZip(context)) }, enabled = files > 0) { Text("Export Dataset ZIP") }
+        Button(onClick = { onExport(DatasetStore.exportZip(context)) }, enabled = files > 0) {
+            Text("Export Dataset ZIP")
+        }
         Spacer(Modifier.height(8.dp))
         Text("The ZIP contains labeled JSON stroke data and an SVG for every saved sample.")
         Spacer(Modifier.height(20.dp))
